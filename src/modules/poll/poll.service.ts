@@ -5,25 +5,39 @@ import { msg400 } from 'src/common/helpers/exception.msg';
 
 @Injectable()
 export class PollService {
-  async checkStatus(id: number): Promise<any> {
-    try {
-      const client = await cosmwasm.SigningCosmWasmClient.connect(
-        RPC_PROVIDER_ENDPOINT,
-      );
-      const payload = { poll: { poll_id: id } };
+  private async _getPollById(id: number): Promise<any> {
+    const client = await cosmwasm.SigningCosmWasmClient.connect(
+      RPC_PROVIDER_ENDPOINT,
+    );
+    const payload = { poll: { poll_id: id } };
 
-      const result = await client.queryContractSmart(CONTRACT_ADDRESS, payload);
+    return await client.queryContractSmart(CONTRACT_ADDRESS, payload);
+  }
+
+  async getInfo(id: number): Promise<any> {
+    try {
+      const currentPoll = await this._getPollById(id);
       return {
         status: 'success',
-        pollStatus: result.status,
+        data: currentPoll,
       };
     } catch (err) {
-      console.log(err);
       throw new BadRequestException(
-        msg400(
-          'An error occured while querying to smart contract',
-          err.message,
-        ),
+        msg400('An error occured while getting poll info', err.message),
+      );
+    }
+  }
+
+  async checkStatus(id: number): Promise<any> {
+    try {
+      const currentPoll = await this._getPollById(id);
+      return {
+        status: 'success',
+        pollStatus: currentPoll.status,
+      };
+    } catch (err) {
+      throw new BadRequestException(
+        msg400('An error occured while getting poll status', err.message),
       );
     }
   }
