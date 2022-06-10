@@ -16,13 +16,8 @@ export class PollController {
     return await this.pollService.checkStatus(Number(params.id));
   }
 
-  @Post()
-  async createNewPoll() {
-    return 'Created new poll!';
-  }
-
-  @Delete()
-  async stopPoll() {
-    return 'Poll stopped.';
+  @Get('wallet/:walletAddress')
+  async getByWallet(@Param() params) {
+    return await this.pollService.getVotedPolls(params.walletAddress);
   }
 }
