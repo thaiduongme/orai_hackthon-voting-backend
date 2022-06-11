@@ -72,8 +72,13 @@ export class PollService {
         page_id += 1;
       }
     } while (flag);
+    if (result.length === 0) {
+      throw new BadRequestException(
+        msg400(
+          'An error occurred while getting vote polls of this wallet address',
+        ),
+      );
+    }
     return result;
-
-    // Get transaction contains poll_id and has that smart-contract address
   }
 }
