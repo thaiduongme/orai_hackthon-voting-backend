@@ -102,13 +102,13 @@ export class PollService {
       }
     } while (flag);
     result = await this._getPolls(pollIds);
-    if (result.length === 0) {
-      throw new BadRequestException(
-        msg400(
-          'An error occurred while getting vote polls of this wallet address',
-        ),
-      );
-    }
+    // if (result.length === 0) {
+    //   throw new BadRequestException(
+    //     msg400(
+    //       'An error occurred while getting vote polls of this wallet address',
+    //     ),
+    //   );
+    // }
     return result;
   }
 
