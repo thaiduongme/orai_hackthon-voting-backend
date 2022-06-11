@@ -59,12 +59,27 @@ export class PollService {
     }
   }
 
+  async _getPolls(pollIds: number[]) {
+    let result = [];
+    const ids = [...pollIds];
+    while (ids.length) {
+      const current = await Promise.all(
+        ids
+          .splice(0, 10)
+          .map(async (pollId) => await this._getPollById(pollId)),
+      );
+      result = Array.prototype.concat(...current, ...result);
+    }
+    return result;
+  }
+
   async getVotedPolls(walletAddress: string): Promise<any> {
-    const result = [];
+    let result = [];
     // Get all transactions of this wallet
     let flag = true;
     let limit = 100;
     let page_id = 1;
+    const pollIds: number[] = [];
     do {
       const response = await request(
         `https://api.testnet.scan.orai.io/v1/txs-account/${walletAddress}?limit=${limit}&page_id=${page_id}`,
@@ -80,14 +95,13 @@ export class PollService {
             tx.messages[0].contract == CONTRACT_ADDRESS &&
             tx.messages[0].msg.cast_vote
           ) {
-            result.push(
-              await this._getPollById(tx.messages[0].msg.cast_vote.poll_id),
-            );
+            pollIds.push(tx.messages[0].msg.cast_vote.poll_id);
           }
         }
         page_id += 1;
       }
     } while (flag);
+    result = await this._getPolls(pollIds);
     if (result.length === 0) {
       throw new BadRequestException(
         msg400(
@@ -99,43 +113,62 @@ export class PollService {
   }
 
   async getAllPolls() {
-    const totalPollNumber = await this._getTotalPollNumber();
-    const pollIds = Array.from({ length: totalPollNumber }, (_, i) => i + 1);
-    let result = [];
-    while (pollIds.length) {
-      const current = await Promise.all(
-        pollIds
-          .splice(0, 10)
-          .map(async (pollId) => await this._getPollById(pollId)),
+    try {
+      const totalPollNumber = await this._getTotalPollNumber();
+      const pollIds = Array.from({ length: totalPollNumber }, (_, i) => i + 1);
+      let result = await this._getPolls(pollIds);
+      return result;
+    } catch (err) {
+      throw new BadRequestException(
+        msg400(
+          'An error occcured while trying to get polls create by a wallet',
+          err.message,
+        ),
       );
-      result = Array.prototype.concat(...current, ...result);
     }
-    return result;
   }
 
   async getPollsCreatedByWallet(walletAddress: string) {
-    const result = [];
-    const allPolls = await this.getAllPolls();
-    for (let poll of allPolls) {
-      if (poll['creator'] == walletAddress) {
-        result.push(poll);
+    try {
+      const result = [];
+      const allPolls = await this.getAllPolls();
+      for (let poll of allPolls) {
+        if (poll['creator'] == walletAddress) {
+          result.push(poll);
+        }
       }
+      return result;
+    } catch (err) {
+      throw new BadRequestException(
+        msg400(
+          'An error occcured while trying to get polls create by a wallet',
+          err.message,
+        ),
+      );
     }
-    return result;
   }
 
   async getStartEndHeight(duration: number) {
-    const response = await request(
-      `https://api.testnet.scan.orai.io/v1/status`,
-    );
-    const responseJson = await response.body.json();
-    const avgTime = responseJson['block_time'] / 3600;
-    const start_height = responseJson['latest_block_height'];
-    const end_height = start_height + Math.ceil(duration / avgTime);
+    try {
+      const response = await request(
+        `https://api.testnet.scan.orai.io/v1/status`,
+      );
+      const responseJson = await response.body.json();
+      const avgTime = responseJson['block_time'] / 3600;
+      const start_height = responseJson['latest_block_height'];
+      const end_height = start_height + Math.ceil(duration / avgTime);
 
-    return {
-      start_height,
-      end_height,
-    };
+      return {
+        start_height,
+        end_height,
+      };
+    } catch (err) {
+      throw new BadRequestException(
+        msg400(
+          'An error occcured while trying to get start, end height from duration (h)',
+          err.message,
+        ),
+      );
+    }
   }
 }
