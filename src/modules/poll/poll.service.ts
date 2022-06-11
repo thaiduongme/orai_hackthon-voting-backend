@@ -12,8 +12,12 @@ export class PollService {
       RPC_PROVIDER_ENDPOINT,
     );
     const payload = { poll: { poll_id: id } };
-
-    return await client.queryContractSmart(CONTRACT_ADDRESS, payload);
+    const currentPoll = await client.queryContractSmart(
+      CONTRACT_ADDRESS,
+      payload,
+    );
+    currentPoll['poll_id'] = id;
+    return currentPoll;
   }
 
   private async _getTotalPollNumber(): Promise<any> {
