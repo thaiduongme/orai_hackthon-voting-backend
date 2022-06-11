@@ -31,4 +31,9 @@ export class PollController {
   async getPollCreatedBy(@Param() params) {
     return await this.pollService.getPollsCreatedByWallet(params.walletAddress);
   }
+
+  @Get('/duration/:duration')
+  async getStartEndHeight(@Param() params) {
+    return await this.pollService.getStartEndHeight(Number(params.duration));
+  }
 }
