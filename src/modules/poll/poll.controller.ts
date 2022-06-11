@@ -26,4 +26,9 @@ export class PollController {
   async getAll() {
     return await this.pollService.getAllPolls();
   }
+
+  @Get('created-by/:walletAddress')
+  async getPollCreatedBy(@Param() params) {
+    return await this.pollService.getPollsCreatedByWallet(params.walletAddress);
+  }
 }

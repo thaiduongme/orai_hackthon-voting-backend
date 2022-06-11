@@ -108,4 +108,15 @@ export class PollService {
     }
     return result;
   }
+
+  async getPollsCreatedByWallet(walletAddress: string) {
+    const result = [];
+    const allPolls = await this.getAllPolls();
+    for (let poll of allPolls) {
+      if (poll['creator'] == walletAddress) {
+        result.push(poll);
+      }
+    }
+    return result;
+  }
 }
