@@ -1,4 +1,5 @@
 import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { get } from 'http';
 import { StatusRequest } from './dto/request.dto';
 import { PollService } from './poll.service';
 
@@ -19,5 +20,10 @@ export class PollController {
   @Get('wallet/:walletAddress')
   async getByWallet(@Param() params) {
     return await this.pollService.getVotedPolls(params.walletAddress);
+  }
+
+  @Get()
+  async getAll() {
+    return await this.pollService.getAllPolls();
   }
 }

@@ -3,6 +3,7 @@ import * as cosmwasm from '@cosmjs/cosmwasm-stargate';
 import { RPC_PROVIDER_ENDPOINT, CONTRACT_ADDRESS } from 'src/loaders/constants';
 import { msg400 } from 'src/common/helpers/exception.msg';
 import { request } from 'undici';
+import { range } from 'rxjs';
 
 @Injectable()
 export class PollService {
@@ -13,6 +14,17 @@ export class PollService {
     const payload = { poll: { poll_id: id } };
 
     return await client.queryContractSmart(CONTRACT_ADDRESS, payload);
+  }
+
+  private async _getTotalPollNumber(): Promise<any> {
+    const client = await cosmwasm.SigningCosmWasmClient.connect(
+      RPC_PROVIDER_ENDPOINT,
+    );
+    const payload = { config: {} };
+
+    return (await client.queryContractSmart(CONTRACT_ADDRESS, payload))[
+      'poll_count'
+    ];
   }
 
   async getInfo(id: number): Promise<any> {
@@ -78,6 +90,21 @@ export class PollService {
           'An error occurred while getting vote polls of this wallet address',
         ),
       );
+    }
+    return result;
+  }
+
+  async getAllPolls() {
+    const totalPollNumber = await this._getTotalPollNumber();
+    const pollIds = Array.from({ length: totalPollNumber }, (_, i) => i + 1);
+    let result = [];
+    while (pollIds.length) {
+      const current = await Promise.all(
+        pollIds
+          .splice(0, 10)
+          .map(async (pollId) => await this._getPollById(pollId)),
+      );
+      result = Array.prototype.concat(...current, ...result);
     }
     return result;
   }
