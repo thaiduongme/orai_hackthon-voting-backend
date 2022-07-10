@@ -154,7 +154,7 @@ export class PollService {
         `https://api.testnet.scan.orai.io/v1/status`,
       );
       const responseJson = await response.body.json();
-      const avgTime = responseJson['block_time'] / 3600;
+      const avgTime = responseJson['block_time'] / 60;
       const start_height = responseJson['latest_block_height'];
       const end_height = start_height + Math.ceil(duration / avgTime);
 
